@@ -1,3 +1,9 @@
 # Intellij Idea
 ./idea
 *.iml
+services/
+_build/
+cover/
+deps/
+doc/
+.fetch
