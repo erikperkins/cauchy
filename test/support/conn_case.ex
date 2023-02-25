@@ -32,7 +32,7 @@ defmodule CauchyWeb.ConnCase do
   end
 
   setup tags do
-    Cauchy.DataCase.setup_sandbox(tags)
+#    Cauchy.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

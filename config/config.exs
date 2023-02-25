@@ -7,8 +7,8 @@
 # General application configuration
 import Config
 
-config :cauchy,
-  ecto_repos: [Cauchy.Repo]
+#config :cauchy,
+#  ecto_repos: [Cauchy.Repo]
 
 # Configures the endpoint
 config :cauchy, CauchyWeb.Endpoint,

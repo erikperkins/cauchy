@@ -4,6 +4,7 @@ pipeline {
     imageName = 'erikperkins/cauchy'
     SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
     registryCredential = 'dockerhub-credentials'
+    testImage = ''
     dockerImage = ''
     defaultContext= "arn:aws:eks:us-west-2:822987764804:cluster/kluster"
   }
@@ -12,11 +13,12 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
   stages {
-    stage('Clone') {
+    stage('Test') {
       agent any
       steps {
         script {
-          checkout scm
+          testImage = docker.build("$imageName:test", "-f services/docker/test/Dockerfile .")
+          sh "docker run -t --rm $imageName:test mix test"
         }
       }
     }
@@ -24,15 +26,7 @@ pipeline {
       agent any
       steps {
         script {
-          dockerImage = docker.build(imageName)
-        }
-      }
-    }
-    stage('Test') {
-      agent any
-      steps {
-        script {
-          echo 'Testing...'
+          dockerImage = docker.build(imageName, "-f services/docker/prod/Dockerfile .")
         }
       }
     }
@@ -61,6 +55,7 @@ pipeline {
     always {
       node(null) {
         sh "docker image rm $imageName:$SHA"
+        sh "docker image rm $imageName:test"
         cleanWs()
       }
     }
