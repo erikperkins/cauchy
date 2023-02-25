@@ -1,7 +1,7 @@
 services:
   cauchy:
     build: .
-    image: erikperkins/cauchy:latest
+    image: erikperkins/cauchy:${SHA}
     ports:
       - 80:80
     environment:
