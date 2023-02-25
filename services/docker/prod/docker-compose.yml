@@ -1,6 +1,6 @@
 services:
   cauchy:
-    build: .
+    build: ../../..
     image: erikperkins/cauchy:latest
     ports:
       - 80:80
