@@ -18,7 +18,7 @@ pipeline {
       steps {
         script {
           testImage = docker.build("$imageName:test", "-f services/docker/test/Dockerfile .")
-          sh "docker run -t --rm $imageName:test mix test"
+          sh "docker run -t --rm $imageName:test mix test --no-color"
         }
       }
     }
