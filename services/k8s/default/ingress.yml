@@ -7,6 +7,16 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
+    - host: cauchy.link
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cauchy
+                port:
+                  number: 80
     - host: test.cauchy.link
       http:
         paths:
@@ -16,4 +26,4 @@ spec:
               service:
                 name: blue
                 port:
-                  number: 8080
+                  number: 80

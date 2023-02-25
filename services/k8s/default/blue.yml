@@ -6,7 +6,8 @@ metadata:
     app: blue
 spec:
   ports:
-    - port: 8080
+    - port: 80
+      targetPort: 5678
   selector:
     app: blue
 ---
@@ -15,7 +16,7 @@ kind: Deployment
 metadata:
   name: blue
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: blue
@@ -28,4 +29,6 @@ spec:
         - name: blue
           image: hashicorp/http-echo
           args:
-            - "-text=<body bgcolor='#add8e6'><h3>Hello!</body>"
+            - "-text=<body bgcolor='#add8e6'><h3>Test</h3></body>"
+          ports:
+            - containerPort: 5678
