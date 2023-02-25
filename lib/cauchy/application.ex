@@ -12,7 +12,7 @@ defmodule Cauchy.Application do
       CauchyWeb.Telemetry,
 
       # Start the Ecto repository
-      # Cauchy.Repo,
+#      Cauchy.Repo,
 
       # Start the PubSub system
       {Phoenix.PubSub, name: Cauchy.PubSub},
