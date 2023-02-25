@@ -21,14 +21,14 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
-
-  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+#  database_url =
+#    System.get_env("DATABASE_URL") ||
+#      raise """
+#      environment variable DATABASE_URL is missing.
+#      For example: ecto://USER:PASS@HOST/DATABASE
+#      """
+#
+#  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
 #  config :cauchy, Cauchy.Repo,
 #    # ssl: true,
