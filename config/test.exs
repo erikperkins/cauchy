@@ -1,6 +1,6 @@
 import Config
 
-# Configure your database
+# Configure your cauchy
 #
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
@@ -8,8 +8,8 @@ import Config
 config :cauchy, Cauchy.Repo,
   username: "postgres",
   password: "postgres",
-  hostname: "localhost",
-  database: "cauchy_test#{System.get_env("MIX_TEST_PARTITION")}",
+  hostname: "postgres",
+  database: "postgres#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 

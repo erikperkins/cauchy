@@ -38,3 +38,11 @@ npm-debug.log
 # Intellij Idea
 .idea/
 *.iml
+
+# Compiled assets
+/priv/static/*.gz
+/priv/static/**/*-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9].*
+
+# Release
+/rel/
+mix.lock
