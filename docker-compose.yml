@@ -1,7 +1,7 @@
 services:
   cauchy:
     build: .
-    image: erikperkins/cauchy:${SHA}
+    image: erikperkins/cauchy:latest
     ports:
       - 80:80
     environment:
@@ -9,11 +9,4 @@ services:
       PORT: 80
     depends_on:
       - postgres
-  postgres:
-    image: postgres:15.2-alpine
-    expose:
-      - 5432
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_HOST_AUTH_METHOD: trust
-      POSTGRES_DB: postgres
+
