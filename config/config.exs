@@ -7,9 +7,6 @@
 # General application configuration
 import Config
 
-#config :cauchy,
-#  ecto_repos: [Cauchy.Repo]
-
 # Configures the endpoint
 config :cauchy, CauchyWeb.Endpoint,
   url: [host: "localhost"],
@@ -18,7 +15,7 @@ config :cauchy, CauchyWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Cauchy.PubSub,
-  live_view: [signing_salt: "aVHk0ZRh"]
+  live_view: [signing_salt: "WWh7W7Dv"]
 
 # Configures the mailer
 #
