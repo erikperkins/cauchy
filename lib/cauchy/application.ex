@@ -10,10 +10,6 @@ defmodule Cauchy.Application do
     children = [
       # Start the Telemetry supervisor
       CauchyWeb.Telemetry,
-
-      # Start the Ecto repository
-#      Cauchy.Repo,
-
       # Start the PubSub system
       {Phoenix.PubSub, name: Cauchy.PubSub},
       # Start Finch

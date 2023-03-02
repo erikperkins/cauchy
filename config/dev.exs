@@ -1,15 +1,5 @@
 import Config
 
-# Configure your database
-#config :cauchy, Cauchy.Repo,
-#  username: "postgres",
-#  password: "postgres",
-#  hostname: "postgres",
-#  database: "postgres",
-#  stacktrace: true,
-#  show_sensitive_data_on_connection_error: true,
-#  pool_size: 10
-
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
@@ -23,7 +13,7 @@ config :cauchy, CauchyWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "5s5+l1FOvVUDtfZMB0IrfVtTsPbF+GbV88rTnYIUYHHDu7AATNm8sQOR1/cklINL",
+  secret_key_base: "RVkbdvTLaK5Xp19WWedhmztrtfPexsxUVn60rEBY+YIbtdUre6LVNpzHkKc2Feqf",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}

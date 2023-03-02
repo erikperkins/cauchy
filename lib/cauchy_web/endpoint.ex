@@ -7,7 +7,7 @@ defmodule CauchyWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_cauchy_key",
-    signing_salt: "ZYnd6/a7",
+    signing_salt: "Zo1xkaE8",
     same_site: "Lax"
   ]
 
@@ -29,7 +29,6 @@ defmodule CauchyWeb.Endpoint do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :cauchy
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,
