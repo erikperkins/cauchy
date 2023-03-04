@@ -6,7 +6,7 @@ pipeline {
     registryCredential = 'dockerhub-credentials'
     testImage = ''
     dockerImage = ''
-    defaultContext= "arn:aws:eks:us-west-2:822987764804:cluster/kluster"
+    defaultContext = "arn:aws:eks:us-west-2:822987764804:cluster/kluster"
   }
   options {
     skipStagesAfterUnstable()
