@@ -27,3 +27,19 @@ Update the local `kubectl` config with the cluster information.
 $ aws eks update-kubeconfig --region us-west-2 --name kluster
 $ kubectl config view
 ```
+
+## Jenkins
+### Credentials
+- Jenkins ssh key, SSH username with private key 
+- kubectl config, Secret file, .kube/config file
+- Kubernetes Jenkins secret, Secret text, secret for Jenkins service
+- GitHub Jenkins App, GitHub App, GitHub app for Jenkins integration
+- GitHub access token, Secret text, GitHub personal access token
+- Dockerhub credentials, Username with password
+
+### Clouds
+- Blank kubernetes URL
+- Namespace `jenkins`
+- Jenkins URL `http://jenkins.jenkins.svc.cluster.local`
+- Restrict pipeline support to authorized folders (enables kubernetes in pipelines)
+- Pod template, label `jenkins-agent`, usage = "Use this node as much as possible"
