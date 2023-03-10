@@ -16,3 +16,14 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
   * Docs: https://hexdocs.pm/phoenix
   * Forum: https://elixirforum.com/c/phoenix-forum
   * Source: https://github.com/phoenixframework/phoenix
+
+## Kubernetes Bootstrap
+Set up [IAM OIDC provider](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html),
+and set up [AWS EBS CSI driver IAM role](https://docs.aws.amazon.com/eks/latest/userguide/csi-iam-role.html).
+Then add the AWS EBS CSI driver to the cluster in the AWS EKS console UI.
+
+Update the local `kubectl` config with the cluster information.
+```
+$ aws eks update-kubeconfig --region us-west-2 --name kluster
+$ kubectl config view
+```
