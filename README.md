@@ -43,3 +43,14 @@ $ kubectl config view
 - Jenkins URL `http://jenkins.jenkins.svc.cluster.local`
 - Restrict pipeline support to authorized folders (enables kubernetes in pipelines)
 - Pod template, label `jenkins-agent`, usage = "Use this node as much as possible"
+
+### Kaniko
+Create a secret for Kaniko in order to push Docker images to Dockerhub
+```
+$  kubectl create secret generic kaniko --namespace jenkins --from-file config.json
+```
+where `config.json` has the structure
+```
+echo "<dockerhub username>:<dockerhub token>" | base64
+{"auths":{"https://index.docker.io/v1/":{"auth":"<base64 encoded username and token>"}}}
+```
