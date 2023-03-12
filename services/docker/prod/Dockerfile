@@ -35,21 +35,21 @@ RUN mix local.hex --force && \
 ENV MIX_ENV="prod"
 
 # install mix dependencies
-COPY ../../../mix.exs mix.lock ./
+COPY mix.exs mix.lock ./
 RUN mix deps.get --only $MIX_ENV
 RUN mkdir config
 
 # copy compile-time config files before we compile dependencies
 # to ensure any relevant config change will trigger the dependencies
 # to be re-compiled.
-COPY ../../../config/config.exs config/${MIX_ENV}.exs config/
+COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
 
-COPY ../../../priv priv
+COPY priv priv
 
-COPY ../../../lib lib
+COPY lib lib
 
-COPY ../../../assets assets
+COPY assets assets
 
 # compile assets
 RUN mix assets.deploy
@@ -58,9 +58,9 @@ RUN mix assets.deploy
 RUN mix compile
 
 # Changes to config/runtime.exs don't require recompiling the code
-COPY ../../../config/runtime.exs config/
+COPY config/runtime.exs config/
 
-COPY ../../../rel rel
+COPY rel rel
 RUN mix release
 
 RUN touch secret.key.base

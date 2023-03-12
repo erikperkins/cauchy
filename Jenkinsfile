@@ -1,62 +1,73 @@
 pipeline {
-  agent any
-  environment {
-    imageName = 'erikperkins/cauchy'
-    SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-    registryCredential = 'dockerhub-credentials'
-    testImage = ''
-    dockerImage = ''
-    defaultContext= "arn:aws:eks:us-west-2:822987764804:cluster/kluster"
+  agent {
+    kubernetes {
+      yaml """
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: kaniko
+          namespace: jenkins
+        spec:
+          containers:
+            - name: elixir
+              image: elixir:1.14.3-slim
+              imagePullPolicy: Always
+              command:
+                - sleep
+              args:
+                - 1d
+            - name: kaniko
+              image: gcr.io/kaniko-project/executor:debug
+              imagePullPolicy: Always
+              command:
+                - sleep
+              args:
+                - 1d
+              volumeMounts:
+               - name: kaniko
+                 mountPath: /kaniko/.docker
+          volumes:
+            - name: kaniko
+              secret:
+                secretName: kaniko
+      """
+    }
   }
   options {
-    skipStagesAfterUnstable()
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
+
+  environment {
+      REPOSITORY = 'erikperkins'
+      IMAGE = 'cauchy'
+      TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+  }
+
   stages {
     stage('Test') {
-      agent any
       steps {
-        script {
-          testImage = docker.build("$imageName:test", "-f services/docker/test/Dockerfile .")
-          sh "docker run -t --rm $imageName:test mix test --no-color"
+        container(name: 'elixir') {
+          sh "mix local.hex --force"
+          sh "mix local.rebar --force"
+          sh "mix deps.get"
+          sh "mix test --no-color"
         }
       }
     }
     stage('Build') {
-      agent any
-      steps {
-        script {
-          dockerImage = docker.build(imageName, "-f services/docker/prod/Dockerfile .")
-        }
+      environment {
+        DOCKERFILE = 'services/docker/prod/Dockerfile'
       }
-    }
-    stage('Deliver') {
-      agent any
       steps {
-        script {
-          docker.withRegistry('', registryCredential) {
-            dockerImage.push("$SHA")
-          }
+        container(name: 'kaniko', shell: '/busybox/sh') {
+          sh """#!/busybox/sh
+            /kaniko/executor \
+              --context `pwd` \
+              --dockerfile ${DOCKERFILE} \
+              --destination ${REPOSITORY}/${IMAGE}:${TAG} \
+              --destination ${REPOSITORY}/${IMAGE}:latest
+          """
         }
-      }
-    }
-    stage('Deploy') {
-      when { branch 'master' }
-      steps {
-        script {
-          withKubeConfig([credentialsId: "kube-config", contextName: defaultContext]) {
-            sh "kubectl set image deployment/cauchy cauchy=erikperkins/cauchy:$SHA"
-          }
-        }
-      }
-    }
-  }
-  post {
-    always {
-      node(null) {
-        sh "docker image rm $imageName:$SHA"
-        sh "docker image rm $imageName:test"
-        cleanWs()
       }
     }
   }
