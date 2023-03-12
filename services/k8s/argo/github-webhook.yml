@@ -60,9 +60,9 @@ spec:
         resources:
           requests:
             storage: 1Gi
-  ttlStrategy:
-    secondsAfterSuccess: 60
-    secondsAfterFailure: 600
+#  ttlStrategy:
+#    secondsAfterSuccess: 60
+#    secondsAfterFailure: 600
   templates:
     - name: whales
       dag:
@@ -125,18 +125,24 @@ spec:
             mix test --no-color
     - name: build
       container:
-        image: gcr.io/kaniko-project/executor:latest
+        image: gcr.io/kaniko-project/executor:debug
         volumeMounts:
           - name: workspace
-            mountPath: /mnt/vol
+            mountPath: /workspace
           - name: kaniko
             mountPath: /kaniko/.docker
-        workingDir: /mnt/vol/app
-        args:
-          - |
-            --destination="{{workflow.parameters.repository-fullname}}":"{{workflow.parameters.commit}}"
-          - |
-            --destination="{{workflow.parameters.repository-fullname}}":latest
+        workingDir: /workspace/app
+        entrypoint: ["/busybox/sh"]
+        command: ["ls", "-a"]
+#        args:
+#          - |
+#            --context=/workspace/app
+#          - |
+#            --dockerfile=Dockerfile
+#          - |
+#            --destination="{{workflow.parameters.repository-fullname}}":"{{workflow.parameters.commit}}"
+#          - |
+#            --destination="{{workflow.parameters.repository-fullname}}":latest
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
