@@ -154,9 +154,8 @@ metadata:
   name: jenkins
   namespace: jenkins
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: nginx
 spec:
-  ingressClassName: nginx
   rules:
     - host: jenkins.cauchy.link
       http:
@@ -167,4 +166,4 @@ spec:
               service:
                 name: jenkins
                 port:
-                  number: 80
+                  name: http
