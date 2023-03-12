@@ -60,28 +60,28 @@ spec:
         resources:
           requests:
             storage: 1Gi
-#  ttlStrategy:
-#    secondsAfterSuccess: 60
-#    secondsAfterFailure: 600
+  ttlStrategy:
+    secondsAfterSuccess: 60
+    secondsAfterFailure: 600
   templates:
     - name: whales
       dag:
         tasks:
-          - name: A
+          - name: clone
             template: clone
-#          - name: B
+#          - name: test
 #            template: test
-#            dependencies: [A]
-#          - name: C
+#            dependencies: [clone]
+#          - name: whale
 #            template: whale
-#            dependencies: [A]
+#            dependencies: [clone]
 #            arguments:
 #              parameters:
 #                - name: bloop
 #                  value: "{{workflow.parameters.repository-fullname}}"
-          - name: D
+          - name: build
             template: build
-            dependencies: [A]
+            dependencies: [clone] # [test, whale]
     - name: whale
       container:
         image: docker/whalesay:latest
@@ -125,24 +125,23 @@ spec:
             mix test --no-color
     - name: build
       container:
-        image: gcr.io/kaniko-project/executor:debug
+        image: gcr.io/kaniko-project/executor:latest
         volumeMounts:
           - name: workspace
             mountPath: /workspace
           - name: kaniko
             mountPath: /kaniko/.docker
         workingDir: /workspace/app
-        entrypoint: ["/busybox/sh"]
-        command: ["ls", "-a"]
-#        args:
-#          - |
-#            --context=/workspace/app
-#          - |
-#            --dockerfile=Dockerfile
-#          - |
-#            --destination="{{workflow.parameters.repository-fullname}}":"{{workflow.parameters.commit}}"
-#          - |
-#            --destination="{{workflow.parameters.repository-fullname}}":latest
+        env:
+          - name: REPOSITORY
+            value: "{{workflow.parameters.repository-fullname}}"
+          - name: TAG
+            value: "{{workflow.parameters.tag}}"
+        args:
+          - "--context=/workspace/app"
+          - "--dockerfile=Dockerfile"
+          - "--destination=$(REPOSITORY):$(TAG)"
+          - "--destination=$(REPOSITORY):latest"
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
@@ -174,6 +173,8 @@ spec:
                       value: "repo"
                     - name: commit
                       value: "commit"
+                    - name: tag
+                      value: "tag"
                 workflowTemplateRef:
                   name: git-dag
           parameters:
@@ -185,6 +186,10 @@ spec:
                 dependencyName: github-payload
                 dataKey: body.after
               dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: github-payload
+                dataTemplate: "{{.Input.body.after | substr 0 7}}"
+              dest: spec.arguments.parameters.2.value
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
