@@ -48,6 +48,10 @@ metadata:
   namespace: argo-events
 spec:
   entrypoint: whales
+  volumes:
+    - name: kaniko
+      secret:
+        secretName: kaniko
   volumeClaimTemplates:
     - metadata:
         name: workspace
@@ -56,22 +60,28 @@ spec:
         resources:
           requests:
             storage: 1Gi
+  ttlStrategy:
+    secondsAfterSuccess: 60
+    secondsAfterFailure: 600
   templates:
     - name: whales
       dag:
         tasks:
           - name: A
             template: clone
-          - name: B
-            template: test
+#          - name: B
+#            template: test
+#            dependencies: [A]
+#          - name: C
+#            template: whale
+#            dependencies: [A]
+#            arguments:
+#              parameters:
+#                - name: bloop
+#                  value: "{{workflow.parameters.repository-fullname}}"
+          - name: D
+            template: build
             dependencies: [A]
-          - name: C
-            template: whale
-            dependencies: [A]
-            arguments:
-              parameters:
-                - name: bloop
-                  value: "{{workflow.parameters.repository-fullname}}"
     - name: whale
       container:
         image: docker/whalesay:latest
@@ -84,8 +94,8 @@ spec:
       container:
         image: alpine/git:latest
         volumeMounts:
-          - mountPath: /mnt/vol
-            name: workspace
+          - name: workspace
+            mountPath: /mnt/vol
         workingDir: /mnt/vol
         env:
           - name: GITHUB_TOKEN
@@ -103,8 +113,8 @@ spec:
       container:
         image: elixir:1.14.3-slim
         volumeMounts:
-          - mountPath: /mnt/vol
-            name: workspace
+          - name: workspace
+            mountPath: /mnt/vol
         workingDir: /mnt/vol/app
         command: ['sh', '-xuce']
         args:
@@ -113,6 +123,20 @@ spec:
             mix local.rebar --force
             mix deps.get
             mix test --no-color
+    - name: build
+      container:
+        image: gcr.io/kaniko-project/executor:latest
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/vol
+          - name: kaniko
+            mountPath: /kaniko/.docker
+        workingDir: /mnt/vol/app
+        args:
+          - |
+            --destination="{{workflow.parameters.repository-fullname}}":"{{workflow.parameters.commit}}"
+          - |
+            --destination="{{workflow.parameters.repository-fullname}}":latest
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
