@@ -1,18 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
-kind: EventBus
-metadata:
-  name: default
-  namespace: argo-events
-spec:
-  nats:
-    native:
-      replicas: 3
-      auth: token
----
-apiVersion: argoproj.io/v1alpha1
 kind: EventSource
 metadata:
-  name: webhook
+  name: github
   namespace: argo-events
 spec:
   service:
@@ -20,7 +9,7 @@ spec:
       - port: 12000
         targetPort: 12000
   webhook:
-    github:
+    gitPush:
       port: "12000"
       endpoint: /github
       method: POST
@@ -38,70 +27,57 @@ spec:
 #        name: my-secret
 #        key: pk-key
 ---
-apiVersion: v1
-kind: ServiceAccount
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
 metadata:
-  name: operate-workflow-sa
+  name: git-dag
   namespace: argo-events
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: operate-workflow-role
-  namespace: argo-events
-rules:
-  - apiGroups:
-      - argoproj.io
-    verbs:
-      - "*"
-    resources:
-      - workflows
-      - workflowtemplates
-      - cronworkflows
-      - clusterworkflowtemplates
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: operate-workflow-role-binding
-  namespace: argo-events
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: operate-workflow-role
-subjects:
-  - kind: ServiceAccount
-    name: operate-workflow-sa
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  annotations:
-    workflows.argoproj.io/description: |
-      Recomended minimum permissions for the `emissary` executor.
-  name: executor
-  namespace: argo-events
-rules:
-  - apiGroups:
-      - argoproj.io
-    resources:
-      - workflowtaskresults
-    verbs:
-      - create
-      - patch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: executor-default
-  namespace: argo-events
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: executor
-subjects:
-  - kind: ServiceAccount
-    name: default
+spec:
+  entrypoint: whales
+  templates:
+    - name: whales
+      dag:
+        tasks:
+          - name: A
+            template: whale
+            arguments:
+              parameters:
+                - name: bloop
+                  value: "{{workflow.parameters.branch}}"
+          - name: B
+            template: whale
+            dependencies: [A]
+            arguments:
+              parameters:
+                - name: bloop
+                  value: "{{workflow.parameters.repository-id}}"
+          - name: C
+            template: whale
+            dependencies: [A]
+            arguments:
+              parameters:
+                - name: bloop
+                  value: "{{workflow.parameters.repository-fullname}}"
+    - name: whale
+      container:
+        image: docker/whalesay:latest
+        command: [cowsay]
+        args: ["{{inputs.parameters.bloop}}"]
+      inputs:
+        parameters:
+          - name: bloop
+    - name: clone
+      container:
+        image: elixir:1.14.3-slim
+        volumeMounts:
+          - mountPath: /app
+            name: work
+        workingDir: /app
+        command:
+          - sh
+        args:
+          - |
+            git clone -v -b "{{workflow.parameters.branch}}" --single-branch --depth 1 "{{workflow.parameters.clone_url}}" .
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
@@ -112,45 +88,57 @@ spec:
   template:
     serviceAccountName: operate-workflow-sa
   dependencies:
-    - name: test-dep
-      eventSourceName: webhook
-      eventName: github
+    - name: github-payload
+      eventSourceName: github
+      eventName: gitPush
   triggers:
     - template:
-        name: webhook-workflow-trigger
-        k8s:
-          operation: create
+        name: github-workflow-trigger
+        argoWorkflow:
+          operation: submit
           source:
             resource:
               apiVersion: argoproj.io/v1alpha1
               kind: Workflow
               metadata:
-                generateName: webhook-
+                generateName: github-
               spec:
-                entrypoint: whalesay
                 arguments:
                   parameters:
                     - name: ref
+                      value: "whale 0"
                     - name: repository-id
-                templates:
-                  - name: whalesay
-                    inputs:
-                      parameters:
-                        - name: ref
-                        - name: repository-id
-                    container:
-                      image: docker/whalesay:latest
-                      command: [cowsay]
-                      args: ["{{inputs.parameters.repository-id}}"]
+                      value: "whale 1"
+                    - name: repository-fullname
+                      value: "whale 2"
+                    - name: branch
+                      value: "main"
+                    - name: clone_url
+                      value: "url"
+                workflowTemplateRef:
+                  name: git-dag
           parameters:
             - src:
-                dependencyName: test-dep
+                dependencyName: github-payload
                 dataKey: body.ref
               dest: spec.arguments.parameters.0.value
             - src:
-                dependencyName: test-dep
+                dependencyName: github-payload
                 dataKey: body.repository.id
               dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: github-payload
+                dataKey: body.repository.full_name
+              dest: spec.arguments.parameters.2.value
+            - src:
+                dependencyName: github-payload
+                dataTemplate: |
+                  {{ .Input.body.ref | splitList "/" | last }}
+              dest: spec.arguments.parameters.3.value
+            - src:
+                dependencyName: github-payload
+                dataKey: body.repository.clone_url
+              dest: spec.arguments.parameters.4.value
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -169,6 +157,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: webhook-eventsource-svc
+                name: github-eventsource-svc
                 port:
                   number: 12000
