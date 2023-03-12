@@ -53,7 +53,7 @@ spec:
       dag:
         tasks:
           - name: A
-            template: whale
+            template: clone
             arguments:
               parameters:
                 - name: bloop
@@ -82,17 +82,23 @@ spec:
           - name: bloop
     - name: clone
       container:
-        image: elixir:1.14.3-slim
-        volumeMounts:
-          - mountPath: /app
-            name: work
-        workingDir: /app
+        image: alpine/git:latest
+#        volumeMounts:
+#          - mountPath: /app
+#            name: work
+#        workingDir: /app
+        env:
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-access
+                key: token
         command:
           - sh
           - -xuce
         args:
           - |
-            git clone -v -b "{{workflow.parameters.branch}}" --single-branch --depth 1 "{{workflow.parameters.clone_url}}" .
+            git clone -v -b "{{workflow.parameters.branch}}" --single-branch --depth 1 https://erikperkins:$GITHUB_TOKEN@github.com/erikperkins/cauchy .
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
@@ -127,7 +133,7 @@ spec:
                     - name: repository-fullname
                       value: "whale 2"
                     - name: branch
-                      value: "main"
+                      value: "argo"
                     - name: clone_url
                       value: "url"
                 workflowTemplateRef:
@@ -148,7 +154,7 @@ spec:
             - src:
                 dependencyName: github-payload
                 dataTemplate: |
-                  {{ .Input.body.ref | splitList "/" | last }}
+                  {{ (split .Input.body.ref "/")._2 }}
               dest: spec.arguments.parameters.3.value
             - src:
                 dependencyName: github-payload
