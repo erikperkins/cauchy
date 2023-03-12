@@ -154,7 +154,7 @@ spec:
             - src:
                 dependencyName: github-payload
                 dataTemplate: |
-                  {{ (split .Input.body.ref "/")._2 }}
+                  {{ .Input.body.ref | splitList "/" | reverse | first }}
               dest: spec.arguments.parameters.3.value
             - src:
                 dependencyName: github-payload
