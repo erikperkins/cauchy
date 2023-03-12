@@ -48,6 +48,14 @@ metadata:
   namespace: argo-events
 spec:
   entrypoint: whales
+  volumeClaimTemplates:
+    - metadata:
+        name: workspace
+      spec:
+        accessModes: [ ReadWriteOnce ]
+        resources:
+          requests:
+            storage: 1Gi
   templates:
     - name: whales
       dag:
@@ -79,10 +87,10 @@ spec:
     - name: clone
       container:
         image: alpine/git:latest
-#        volumeMounts:
-#          - mountPath: /app
-#            name: work
-#        workingDir: /app
+        volumeMounts:
+          - mountPath: /mnt/vol
+            name: workspace
+        workingDir: /mnt/vol
         env:
           - name: GITHUB_TOKEN
             valueFrom:
@@ -94,7 +102,8 @@ spec:
           - -xuce
         args:
           - |
-            git clone -v https://$GITHUB_TOKEN@github.com/"{{workflow.parameters.repository-fullname}}" .
+            git clone -v https://$GITHUB_TOKEN@github.com/"{{workflow.parameters.repository-fullname}}" app
+            cd app
             git checkout "{{workflow.parameters.commit}}"
 ---
 apiVersion: argoproj.io/v1alpha1
