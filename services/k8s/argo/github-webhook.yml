@@ -54,17 +54,13 @@ spec:
         tasks:
           - name: A
             template: clone
-            arguments:
-              parameters:
-                - name: bloop
-                  value: "{{workflow.parameters.branch}}"
           - name: B
             template: whale
             dependencies: [A]
             arguments:
               parameters:
                 - name: bloop
-                  value: "{{workflow.parameters.repository-id}}"
+                  value: "{{workflow.parameters.commit}}"
           - name: C
             template: whale
             dependencies: [A]
@@ -98,7 +94,8 @@ spec:
           - -xuce
         args:
           - |
-            git clone -v -b "{{workflow.parameters.branch}}" --single-branch --depth 1 https://erikperkins:$GITHUB_TOKEN@github.com/erikperkins/cauchy .
+            git clone -v https://$GITHUB_TOKEN@github.com/"{{workflow.parameters.repository-fullname}}" .
+            git checkout "{{workflow.parameters.commit}}"
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
@@ -126,40 +123,21 @@ spec:
               spec:
                 arguments:
                   parameters:
-                    - name: ref
-                      value: "whale 0"
-                    - name: repository-id
-                      value: "whale 1"
                     - name: repository-fullname
-                      value: "whale 2"
-                    - name: branch
-                      value: "argo"
-                    - name: clone_url
-                      value: "url"
+                      value: "repo"
+                    - name: commit
+                      value: "commit"
                 workflowTemplateRef:
                   name: git-dag
           parameters:
             - src:
                 dependencyName: github-payload
-                dataKey: body.ref
+                dataKey: body.repository.full_name
               dest: spec.arguments.parameters.0.value
             - src:
                 dependencyName: github-payload
-                dataKey: body.repository.id
+                dataKey: body.after
               dest: spec.arguments.parameters.1.value
-            - src:
-                dependencyName: github-payload
-                dataKey: body.repository.full_name
-              dest: spec.arguments.parameters.2.value
-            - src:
-                dependencyName: github-payload
-                dataTemplate: |
-                  {{ .Input.body.ref | splitList "/" | reverse | first }}
-              dest: spec.arguments.parameters.3.value
-            - src:
-                dependencyName: github-payload
-                dataKey: body.repository.clone_url
-              dest: spec.arguments.parameters.4.value
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
