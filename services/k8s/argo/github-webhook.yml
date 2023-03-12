@@ -20,9 +20,9 @@ spec:
       - port: 12000
         targetPort: 12000
   webhook:
-    example:
-      port: 12000
-      endpoint: /example
+    github:
+      port: "12000"
+      endpoint: /github
       method: POST
 # Uncomment to use secure webhook
 #    example-secure:
@@ -114,7 +114,7 @@ spec:
   dependencies:
     - name: test-dep
       eventSourceName: webhook
-      eventName: example
+      eventName: github
   triggers:
     - template:
         name: webhook-workflow-trigger
@@ -130,22 +130,27 @@ spec:
                 entrypoint: whalesay
                 arguments:
                   parameters:
-                    - name: message
-                      value: hello world
+                    - name: ref
+                    - name: repository-id
                 templates:
                   - name: whalesay
                     inputs:
                       parameters:
-                        - name: message
+                        - name: ref
+                        - name: repository-id
                     container:
                       image: docker/whalesay:latest
                       command: [cowsay]
-                      args: ["{{inputs.parameters.message}}"]
+                      args: ["{{inputs.parameters.repository-id}}"]
           parameters:
             - src:
                 dependencyName: test-dep
-                dataKey: body
+                dataKey: body.ref
               dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: test-dep
+                dataKey: body.repository.id
+              dest: spec.arguments.parameters.1.value
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -160,7 +165,7 @@ spec:
     - host: argo.cauchy.link
       http:
         paths:
-          - path: /sensor(/|$)(.*)
+          - path: /webhook(/|$)(.*)
             pathType: Prefix
             backend:
               service:
