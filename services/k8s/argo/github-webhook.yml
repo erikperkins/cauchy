@@ -8,11 +8,25 @@ spec:
     ports:
       - port: 12000
         targetPort: 12000
-  webhook:
-    gitPush:
-      port: "12000"
-      endpoint: /github
-      method: POST
+  github:
+    push:
+      repositories:
+        - owner: erikperkins
+          names:
+            - cauchy
+      webhook:
+        endpoint: /push
+        port: "12000"
+        method: POST
+        url: http://argo.cauchy.link/webhook/github
+      events:
+        - "push"
+      apiToken:
+        name: github-access
+        key: token
+      insecure: true
+      active: true
+      contentType: json
 # Uncomment to use secure webhook
 #    example-secure:
 #      port: "13000"
@@ -75,6 +89,7 @@ spec:
         workingDir: /app
         command:
           - sh
+          - -xuce
         args:
           - |
             git clone -v -b "{{workflow.parameters.branch}}" --single-branch --depth 1 "{{workflow.parameters.clone_url}}" .
@@ -90,7 +105,7 @@ spec:
   dependencies:
     - name: github-payload
       eventSourceName: github
-      eventName: gitPush
+      eventName: push
   triggers:
     - template:
         name: github-workflow-trigger
@@ -153,7 +168,7 @@ spec:
     - host: argo.cauchy.link
       http:
         paths:
-          - path: /webhook(/|$)(.*)
+          - path: /webhook/github(/|$)(.*)
             pathType: Prefix
             backend:
               service:
