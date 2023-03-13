@@ -1,12 +1,10 @@
 services:
   cauchy:
-    build: ../../..
     image: erikperkins/cauchy:latest
     ports:
       - 80:80
     environment:
       DATABASE_URL: ecto://postgres@postgres/postgres
       PORT: 80
-    depends_on:
-      - postgres
+
 
