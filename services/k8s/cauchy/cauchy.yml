@@ -36,12 +36,15 @@ spec:
       app: cauchy
   template:
     metadata:
+      annotations:
+        date:
       labels:
         app: cauchy
     spec:
       containers:
         - name: cauchy
           image: erikperkins/cauchy:latest
+          imagePullPolicy: Always
           env:
             - name: DATABASE_URL
               value: ecto://postgres@postgres/postgres

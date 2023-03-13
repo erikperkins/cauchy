@@ -1,0 +1,101 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: cauchy
+  namespace: argo-events
+spec:
+  entrypoint: whales
+  volumes:
+    - name: kaniko
+      secret:
+        secretName: kaniko
+  volumeClaimTemplates:
+    - metadata:
+        name: workspace
+      spec:
+        accessModes: [ ReadWriteOnce ]
+        resources:
+          requests:
+            storage: 1Gi
+  ttlStrategy:
+    secondsAfterSuccess: 60
+    secondsAfterFailure: 600
+  templates:
+    - name: whales
+      dag:
+        tasks:
+          - name: clone
+            template: clone
+          - name: test
+            template: test
+            dependencies: [clone]
+          - name: whale
+            template: whale
+            dependencies: [clone]
+            arguments:
+              parameters:
+                - name: bloop
+                  value: "{{workflow.parameters.time}}"
+          - name: build
+            template: build
+            dependencies: [test, whale]
+    - name: clone
+      container:
+        image: alpine/git:latest
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/vol
+        workingDir: /mnt/vol
+        env:
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-access
+                key: token
+        command: ['sh', '-xuce']
+        args:
+          - |
+            git clone -v https://$GITHUB_TOKEN@github.com/"{{workflow.parameters.repository}}" app
+            cd app
+            git checkout "{{workflow.parameters.commit}}"
+    - name: test
+      container:
+        image: elixir:1.14.3-slim
+        volumeMounts:
+          - name: workspace
+            mountPath: /mnt/vol
+        workingDir: /mnt/vol/app
+        command: ['sh', '-xuce']
+        args:
+          - |
+            mix local.hex --force
+            mix local.rebar --force
+            mix deps.get
+            mix test --no-color
+    - name: build
+      container:
+        image: gcr.io/kaniko-project/executor:latest
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: kaniko
+            mountPath: /kaniko/.docker
+        workingDir: /workspace/app
+        env:
+          - name: REPOSITORY
+            value: "{{workflow.parameters.repository}}"
+          - name: TAG
+            value: "{{workflow.parameters.tag}}"
+        args:
+          - "--context=/workspace/app"
+          - "--dockerfile=Dockerfile"
+          - "--destination=$(REPOSITORY):$(TAG)"
+          - "--destination=$(REPOSITORY):latest"
+    - name: whale
+      container:
+        image: docker/whalesay:latest
+        command: [cowsay]
+        args: ["{{inputs.parameters.bloop}}"]
+      inputs:
+        parameters:
+          - name: bloop
