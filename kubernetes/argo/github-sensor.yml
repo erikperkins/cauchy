@@ -90,7 +90,7 @@ spec:
                   parameters:
                     - name: repository
                       value: "repo"
-                    - name: commit
+                    - name: git_sha
                       value: "commit"
                     - name: tag
                       value: "tag"

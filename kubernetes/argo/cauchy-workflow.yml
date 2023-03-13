@@ -4,7 +4,7 @@ metadata:
   name: cauchy
   namespace: argo-events
 spec:
-  entrypoint: whales
+  entrypoint: ci-pipeline
   volumes:
     - name: kaniko
       secret:
@@ -18,27 +18,116 @@ spec:
           requests:
             storage: 1Gi
   ttlStrategy:
-    secondsAfterSuccess: 60
-    secondsAfterFailure: 600
+    secondsAfterSuccess: 300
+    secondsAfterFailure: 300
   templates:
-    - name: whales
+    - name: ci-pipeline
       dag:
         tasks:
           - name: clone
             template: clone
-          - name: test
-            template: test
-            dependencies: [clone]
-          - name: whale
-            template: whale
-            dependencies: [clone]
+          - name: clone-pending
+            template: github-notifier
             arguments:
               parameters:
-                - name: bloop
-                  value: "{{workflow.parameters.time}}"
+                - name: context
+                  value: "Clone"
+                - name: description
+                  value: "Clone repository"
+                - name: state
+                  value: "pending"
+          - name: clone-success
+            template: github-notifier
+            arguments:
+              parameters:
+                - name: context
+                  value: "Clone"
+                - name: description
+                  value: "Clone repository"
+                - name: state
+                  value: "success"
+            depends: clone.Succeeded
+          - name: clone-failure
+            template: github-notifier
+            arguments:
+              parameters:
+                - name: context
+                  value: "Clone"
+                - name: description
+                  value: "Clone repository"
+                - name: state
+                  value: "failure"
+            depends: (clone.Failed || clone.Errored)
+          - name: unit-test
+            template: unit-test
+            depends: clone.Succeeded
+          - name: unit-test-pending
+            template: github-notifier
+            arguments:
+              parameters:
+                - name: context
+                  value: "Test"
+                - name: description
+                  value: "Run unit tests"
+                - name: state
+                  value: "pending"
+          - name: unit-test-success
+            template: github-notifier
+            arguments:
+              parameters:
+                - name: context
+                  value: "Test"
+                - name: description
+                  value: "Run unit tests"
+                - name: state
+                  value: "success"
+            depends: unit-test.Succeeded
+          - name: unit-test-failure
+            template: github-notifier
+            arguments:
+              parameters:
+                - name: context
+                  value: "Test"
+                - name: description
+                  value: "Run unit tests"
+                - name: state
+                  value: "failure"
+            depends: (unit-test.Failed || unit-test.Errored) || unit-test.Omitted
           - name: build
             template: build
-            dependencies: [test, whale]
+            depends: unit-test.Succeeded
+          - name: build-pending
+            template: github-notifier
+            arguments:
+              parameters:
+                - name: context
+                  value: "Build"
+                - name: description
+                  value: "Build and deliver artifact"
+                - name: state
+                  value: "pending"
+          - name: build-success
+            template: github-notifier
+            arguments:
+              parameters:
+                - name: context
+                  value: "Build"
+                - name: description
+                  value: "Build and deliver artifact"
+                - name: state
+                  value: "success"
+            depends: build.Succeeded
+          - name: build-failure
+            template: github-notifier
+            arguments:
+              parameters:
+                - name: context
+                  value: "Build"
+                - name: description
+                  value: "Build and deliver artifact"
+                - name: state
+                  value: "failure"
+            depends: (build.Failed || build.Errored) || build.Omitted
     - name: clone
       container:
         image: alpine/git:latest
@@ -57,8 +146,8 @@ spec:
           - |
             git clone -v https://$GITHUB_TOKEN@github.com/"{{workflow.parameters.repository}}" app
             cd app
-            git checkout "{{workflow.parameters.commit}}"
-    - name: test
+            git checkout "{{workflow.parameters.git_sha}}"
+    - name: unit-test
       container:
         image: elixir:1.14.3-slim
         volumeMounts:
@@ -91,11 +180,42 @@ spec:
           - "--dockerfile=Dockerfile"
           - "--destination=$(REPOSITORY):$(TAG)"
           - "--destination=$(REPOSITORY):latest"
-    - name: whale
-      container:
-        image: docker/whalesay:latest
-        command: [cowsay]
-        args: ["{{inputs.parameters.bloop}}"]
+    - name: github-notifier
       inputs:
         parameters:
-          - name: bloop
+          - name: context
+          - name: state
+          - name: target_url
+            value: "https://argo.cauchy.link/workflows/{{workflow.namespace}}/{{workflow.name}}"
+          - name: description
+            value: "None"
+      container:
+        image: ghcr.io/sendible-labs/ci-github-notifier:stable
+        imagePullPolicy: Always
+        env:
+          - name: state
+            value: "{{inputs.parameters.state}}"
+          - name: target_url
+            value: "{{inputs.parameters.target_url}}"
+          - name: description
+            value: "{{inputs.parameters.description}}"
+          - name: context
+            value: "{{inputs.parameters.context}}"
+          - name: organisation
+            value: "erikperkins"
+            # "{{workflow.parameters.organisation}}"
+          - name: app_repo
+            value: "cauchy"
+            # "{{workflow.parameters.app_repo}}"
+          - name: git_sha
+            value: "{{workflow.parameters.git_sha}}"
+          - name: access_token
+            valueFrom:
+              secretKeyRef:
+                name: github-access
+                key: token
+        resources:
+          requests:
+            memory: 8Mi
+            cpu: 1m
+        activeDeadlineSeconds: 300
