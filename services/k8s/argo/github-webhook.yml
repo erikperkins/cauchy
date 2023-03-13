@@ -69,19 +69,22 @@ spec:
         tasks:
           - name: clone
             template: clone
-#          - name: test
-#            template: test
-#            dependencies: [clone]
-#          - name: whale
-#            template: whale
-#            dependencies: [clone]
-#            arguments:
-#              parameters:
-#                - name: bloop
-#                  value: "{{workflow.parameters.repository-fullname}}"
+          - name: test
+            template: test
+            dependencies: [clone]
+          - name: whale
+            template: whale
+            dependencies: [clone]
+            arguments:
+              parameters:
+                - name: bloop
+                  value: "{{workflow.parameters.repository}}"
           - name: build
             template: build
-            dependencies: [clone] # [test, whale]
+            dependencies: [test, whale]
+          - name: deploy
+            template: deploy
+            dependencies: [build]
     - name: whale
       container:
         image: docker/whalesay:latest
@@ -106,7 +109,7 @@ spec:
         command: ['sh', '-xuce']
         args:
           - |
-            git clone -v https://$GITHUB_TOKEN@github.com/"{{workflow.parameters.repository-fullname}}" app
+            git clone -v https://$GITHUB_TOKEN@github.com/"{{workflow.parameters.repository}}" app
             cd app
             git checkout "{{workflow.parameters.commit}}"
     - name: test
@@ -134,7 +137,7 @@ spec:
         workingDir: /workspace/app
         env:
           - name: REPOSITORY
-            value: "{{workflow.parameters.repository-fullname}}"
+            value: "{{workflow.parameters.repository}}"
           - name: TAG
             value: "{{workflow.parameters.tag}}"
         args:
@@ -142,6 +145,22 @@ spec:
           - "--dockerfile=Dockerfile"
           - "--destination=$(REPOSITORY):$(TAG)"
           - "--destination=$(REPOSITORY):latest"
+    - name: deploy
+      resource:
+        action: patch
+        manifest: |
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: cauchy
+            namespace: cauchy
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: cauchy
+                    image: |
+                      "{{workflow.parameters.repository}}":"{{workflow.parameters.tag}}"
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
@@ -169,7 +188,7 @@ spec:
               spec:
                 arguments:
                   parameters:
-                    - name: repository-fullname
+                    - name: repository
                       value: "repo"
                     - name: commit
                       value: "commit"
