@@ -1,6 +1,5 @@
 services:
   cauchy:
-    build: services/docker/prod
     image: erikperkins/cauchy:latest
     ports:
       - 80:80
