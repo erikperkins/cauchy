@@ -36,8 +36,6 @@ spec:
       app: cauchy
   template:
     metadata:
-      annotations:
-        date:
       labels:
         app: cauchy
     spec:
