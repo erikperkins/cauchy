@@ -67,10 +67,14 @@ metadata:
     app: minio
 spec:
   ports:
-    - name: http
+    - name: https
       port: 9090
       protocol: TCP
       targetPort: 9090
+    - name: api
+      port: 9000
+      protocol: TCP
+      targetPort: 9000
   selector:
     app: minio
 ---
@@ -92,4 +96,4 @@ spec:
               service:
                 name: minio
                 port:
-                  name: http
+                  name: https
