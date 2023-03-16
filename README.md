@@ -27,3 +27,12 @@ echo "<dockerhub username>:<dockerhub token>" | base64
 $ cd kubernetes/spark
 $ helm install spark-operator ./helm --values=helm/override.yml --namespace spark
 ```
+
+### Sentry
+```
+$ cd kubernetes/sentry
+$ helm install sentry ./helm --values=helm/override.ywl --values=helm/secrets.yml --namespace sentry
+
+* When running upgrades, make sure to give back the `system.secretKey` value.
+kubectl -n sentry get configmap sentry-sentry -o json | grep -m1 -Po '(?<=system.secret-key: )[^\\]*'
+```
