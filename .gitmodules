@@ -7,3 +7,6 @@
 [submodule "navier"]
 	path = navier
 	url = git@github.com:erikperkins/navier
+[submodule "babinet"]
+	path = babinet
+	url = git@github.com:erikperkins/babinet
