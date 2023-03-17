@@ -4,3 +4,6 @@
 [submodule "dalembert"]
 	path = dalembert
 	url = git@github.com:erikperkins/dalembert
+[submodule "coulomb"]
+	path = coulomb
+	url = git@github.com:erikperkins/coulomb
