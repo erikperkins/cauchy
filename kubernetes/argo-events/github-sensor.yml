@@ -13,7 +13,7 @@ spec:
       repositories:
         - owner: erikperkins
           names:
-            - cauchy
+            - pascal
       webhook:
         endpoint: /push
         port: "12000"
@@ -97,7 +97,7 @@ spec:
                     - name: time
                       value: "time"
                 workflowTemplateRef:
-                  name: cauchy
+                  name: pascal
           parameters:
             - src:
                 dependencyName: github-payload
