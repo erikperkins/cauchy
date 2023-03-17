@@ -1,9 +1,9 @@
 [submodule "pascal"]
 	path = pascal
 	url = git@github.com:erikperkins/pascal
-[submodule "dalembert"]
-	path = dalembert
-	url = git@github.com:erikperkins/dalembert
 [submodule "coulomb"]
 	path = coulomb
 	url = git@github.com:erikperkins/coulomb
+[submodule "navier"]
+	path = navier
+	url = git@github.com:erikperkins/navier
