@@ -43,7 +43,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: workflow-deployment-executor-role-binding
-  namespace: cauchy
+  namespace: pascal
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
