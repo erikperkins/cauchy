@@ -231,6 +231,9 @@ system:
   url: ""
 user:
   create: true
+  email: admin@cauchy.link
+  existingSecret: sentry-override
+  existingSecretKey: password
 zookeeper:
   persistence:
     dataLogDir:
