@@ -48,7 +48,7 @@ filestore:
   backend: s3
   s3:
     bucketName: sentry
-    endpointUrl: "http://minio.minio.svc.cluster.local"
+    endpointUrl: "http://minio.minio.svc.cluster.local:9000"
 hooks:
   dbInit:
     resources:
