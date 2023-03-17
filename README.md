@@ -31,7 +31,10 @@ $ helm install spark-operator ./helm --values=helm/override.yml --namespace spar
 ### Sentry
 ```
 $ cd kubernetes/sentry
-$ helm install sentry ./helm --values=helm/override.ywl --values=helm/secrets.yml --namespace sentry
+$ helm install sentry ./helm -f helm/override.ywl \
+    --set filestore.s3.accessKey=<minio username> \
+    --set filestore.s3.secretKey=<minio password> \
+    --namespace sentry
 
 * When running upgrades, make sure to give back the `system.secretKey` value.
 kubectl -n sentry get configmap sentry-sentry -o json | grep -m1 -Po '(?<=system.secret-key: )[^\\]*'

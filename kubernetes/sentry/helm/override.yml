@@ -1,7 +1,6 @@
 clickhouse:
   clickhouse:
     configmap:
-      builtin_dictionaries_reload_interval: "3600"
       compression:
         cases:
           - method: zstd
@@ -16,39 +15,21 @@ clickhouse:
           - config:
               max_memory_usage: "10000000"
       uncompressed_cache_size: "8589934592"
-    ingress:
-      enabled: false
-    init:
-      image: busybox
-      imagePullPolicy: IfNotPresent
-      imageVersion: 1.31.0
-      resources: {}
-    interserver_http_port: "9009"
     metrics:
-      enabled: false
       image:
         storage: 1Gi
-    path: /var/lib/clickhouse
     persistentVolumeClaim:
       dataPersistentVolume:
-        accessModes:
-          - ReadWriteOnce
-        enabled: true
         storage: 1Gi
-      enabled: true
       logsPersistentVolume:
-        accessModes:
-          - ReadWriteOnce
-        enabled: false
         storage: 1Gi
     replicas: "1"
-  clusterDomain: cluster.local
   enabled: true
 filestore:
   backend: s3
   s3:
     bucketName: sentry
-    endpointUrl: "http://minio.minio.svc.cluster.local"
+    endpointUrl: "http://minio.minio.svc.cluster.local:9000"
 hooks:
   dbInit:
     resources:
@@ -250,6 +231,9 @@ system:
   url: ""
 user:
   create: true
+  email: admin@cauchy.link
+  existingSecret: sentry-override
+  existingSecretKey: password
 zookeeper:
   persistence:
     dataLogDir:
