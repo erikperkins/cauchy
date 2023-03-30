@@ -10,3 +10,6 @@
 [submodule "babinet"]
 	path = babinet
 	url = git@github.com:erikperkins/babinet
+[submodule "bossut"]
+	path = bossut
+	url = git@github.com:erikperkins/bossut
