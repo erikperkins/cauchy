@@ -13,3 +13,6 @@
 [submodule "bossut"]
 	path = bossut
 	url = git@github.com:erikperkins/bossut
+[submodule "mariotte"]
+	path = mariotte
+	url = git@github.com:erikperkins/mariotte
